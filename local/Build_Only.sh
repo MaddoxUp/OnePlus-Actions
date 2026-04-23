@@ -140,9 +140,9 @@ git clone https://github.com/Xiaomichael/kernel_patches.git
 git clone https://github.com/ShirkNeko/SukiSU_patch.git
 
 cd kernel_platform
-cp ../kernel_patches/zram/001-lz4.patch ./common/
-cp ../kernel_patches/zram/lz4armv8.S ./common/lib
-cp ../kernel_patches/zram/002-zstd.patch ./common/
+cp ../kernel_patches/zram_patches/001-lz4.patch ./common/
+cp ../kernel_patches/zram_patches/lz4armv8.S ./common/lib
+cp ../kernel_patches/zram_patches/002-zstd.patch ./common/
 
 if [ "$UNICODE_BYPASS" = "On" ]; then
   if [ "$KERNEL_VERSION" = "6.1" ] || [ "$KERNEL_VERSION" = "6.6" ]; then
@@ -307,8 +307,11 @@ cd "$WORKSPACE/kernel_workspace/kernel_platform/common"
 
 MAKE_CMD_COMMON="make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=\"ccache clang\" RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole LD=ld.lld HOSTLD=ld.lld O=out gki_defconfig all"
 
+export KBUILD_BUILD_USER="xiaoxiaow"
+export KBUILD_BUILD_HOST="xiaoxiaow_build"
+
 if [ "$KERNEL_VERSION" = "6.1" ]; then
-    export KBUILD_BUILD_TIMESTAMP="Tue Dec 12 12:32:56 UTC 2025"
+    export KBUILD_BUILD_TIMESTAMP="Tue Mar 10 03:53:33 UTC 2026"
     export KBUILD_BUILD_VERSION=1
     export PATH="$WORKSPACE/kernel_workspace/kernel_platform/prebuilts/clang/host/linux-x86/clang-r487747c/bin:$PATH"
     eval "$MAKE_CMD_COMMON KCFLAGS+=-O2"

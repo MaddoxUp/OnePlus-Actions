@@ -91,7 +91,7 @@ on:
         options:
           - 'On'
           - 'Off'
-        default: 'On'
+        default: 'Off'
 
       lz4kd:
         description: "是否启用lz4kd(6.1 关闭时使用 lz4 + zstd; 6.6 关闭时使用 lz4)"
@@ -298,14 +298,15 @@ jobs:
 
           cd kernel_platform
           echo "📝 复制补丁文件..."
+          if [ "${{ github.event.inputs.SUSFS }}" == "On" ]; then
             cp ../susfs4oki/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
             cp ../susfs4oki/kernel_patches/fs/* ./common/fs/
             cp ../susfs4oki/kernel_patches/include/linux/* ./common/include/linux/
           fi
 
-          cp ../kernel_patches/zram/001-lz4.patch ./common/
-          cp ../kernel_patches/zram/lz4armv8.S ./common/lib
-          cp ../kernel_patches/zram/002-zstd.patch ./common/
+          cp ../kernel_patches/zram_patches/001-lz4.patch ./common/
+          cp ../kernel_patches/zram_patches/lz4armv8.S ./common/lib
+          cp ../kernel_patches/zram_patches/002-zstd.patch ./common/
 
           if [ "${{ github.event.inputs.UNICODE_BYPASS }}" = "On" ]; then
             if [ "${{ github.event.inputs.KERNEL_VERSION }}" = "6.1" ] || [ "${{ github.event.inputs.KERNEL_VERSION }}" = "6.6" ]; then
@@ -493,8 +494,11 @@ jobs:
       - name: "🔨 Build Kernel | 编译内核"
         run: |
           echo "🏗️ 开始内核编译..."
+          export KBUILD_BUILD_USER="xiaoxiaow"
+          export KBUILD_BUILD_HOST="xiaoxiaow_build"
+
           if [ "${{ github.event.inputs.KERNEL_VERSION }}" == "6.1" ]; then
-            export KBUILD_BUILD_TIMESTAMP="Tue Dec 12 12:32:56 UTC 2025"
+            export KBUILD_BUILD_TIMESTAMP="Tue Mar 10 03:53:33 UTC 2026"
             export KBUILD_BUILD_VERSION=1
             export PATH="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/prebuilts/clang/host/linux-x86/clang-r487747c/bin:$PATH"
             export PATH="/usr/lib/ccache:$PATH"

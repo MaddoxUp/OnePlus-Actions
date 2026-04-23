@@ -22,7 +22,7 @@ CPU=$(ask "请输入 CPU 分支 (例如: sm8750, sm8650, sm8550, sm8475)" "sm865
 FEIL=$(ask "请输入手机型号 (例如: oneplus_13_b, oneplus_12_b, oneplus_11_b)" "oneplus_12_b")
 ANDROID_VERSION=$(ask "请输入内核安卓 KMI 版本 (android15, android14, android13, android12)" "android14")
 KERNEL_VERSION=$(ask "请输入内核版本 (6.6, 6.1, 5.15, 5.10)" "6.1")
-SUSFS=$(ask "是否启用 SUSFS? (On/Off)" "On")
+SUSFS=$(ask "是否启用 SUSFS? (On/Off)" "Off")
 KPM=$(ask "是否启用 KPM (Kernel Patch Manager)? (On/Off)" "Off")
 lz4kd=$(ask "是否启用 lz4kd? (6.1 关闭时使用 lz4 + zstd; 6.6 关闭时使用 lz4) (On/Off)" "Off")
 bbr=$(ask "是否启用 BBR 拥塞控制算法? (On/Off)" "Off")
@@ -150,24 +150,14 @@ curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/builtin/k
 cd KernelSU
 KSU_VERSION_COUNT=$(git rev-list --count main)
 export KSUVER=$(expr $KSU_VERSION_COUNT + 37185)
-
-for i in {1..3}; do
-  KSU_API_VERSION=$(curl -fsSL "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/builtin/kernel/Kbuild" | \
-    grep -m1 "KSU_VERSION_API :=" | cut -d'=' -f2 | tr -d '[:space:]')
-  [ -n "$KSU_API_VERSION" ] && break || sleep 2
-done
-
-if [ -z "$KSU_API_VERSION" ]; then
-  echo "❌ 错误：未能获取 KSU_API_VERSION" >&2
-  exit 1
-fi
+KSU_API_VERSION=4.1.2
 
 KSU_COMMIT_HASH=$(git ls-remote https://github.com/SukiSU-Ultra/SukiSU-Ultra.git refs/heads/builtin | cut -f1 | cut -c1-8)
-KSU_VERSION_FULL="v${KSU_API_VERSION}-${KSU_COMMIT_HASH}-xiaoxiaow@builtin"
+KSU_VERSION_FULL="v${KSU_API_VERSION}-${KSU_COMMIT_HASH}-xiaoxiaow@SukiSU"
 
-sed -i '/define get_ksu_version_full/,/endef/d' kernel/Kbuild
-sed -i '/KSU_VERSION_API :=/d' kernel/Kbuild
-sed -i '/KSU_VERSION_FULL :=/d' kernel/Kbuild
+sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
+sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
+sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
 
 TMP_FILE=$(mktemp)
 while IFS= read -r line; do
@@ -175,15 +165,15 @@ while IFS= read -r line; do
   if echo "$line" | grep -q 'REPO_OWNER :='; then
     cat >> "$TMP_FILE" <<EOF
 define get_ksu_version_full
-v\\\$\$1-${KSU_COMMIT_HASH}-xiaoxiaow@builtin
+v\\\$\$1-${KSU_COMMIT_HASH}-xiaoxiaow@SukiSU
 endef
 
 KSU_VERSION_API := ${KSU_API_VERSION}
 KSU_VERSION_FULL := ${KSU_VERSION_FULL}
 EOF
   fi
-done < kernel/Kbuild
-mv "$TMP_FILE" kernel/Kbuild
+done < kernel/Makefile
+mv "$TMP_FILE" kernel/Makefile
 
 echo "✅ SukiSU Ultra 版本信息配置完成"
 cd ../..
@@ -206,9 +196,9 @@ else
     cp ../kernel_patches/sukisu/scope_min_manual_hooks_v1.6.patch ./common/
 fi
 
-cp ../kernel_patches/zram/001-lz4.patch ./common/
-cp ../kernel_patches/zram/lz4armv8.S ./common/lib
-cp ../kernel_patches/zram/002-zstd.patch ./common/
+cp ../kernel_patches/zram_patches/001-lz4.patch ./common/
+cp ../kernel_patches/zram_patches/lz4armv8.S ./common/lib
+cp ../kernel_patches/zram_patches/002-zstd.patch ./common/
 
 if [ "$UNICODE_BYPASS" = "On" ]; then
   if [ "$KERNEL_VERSION" = "6.1" ] || [ "$KERNEL_VERSION" = "6.6" ]; then
@@ -406,8 +396,11 @@ cd "$WORKSPACE/kernel_workspace/kernel_platform/common"
 
 MAKE_CMD_COMMON="make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=\"ccache clang\" RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole LD=ld.lld HOSTLD=ld.lld O=out gki_defconfig all"
 
+export KBUILD_BUILD_USER="xiaoxiaow"
+export KBUILD_BUILD_HOST="xiaoxiaow_build"
+
 if [ "$KERNEL_VERSION" = "6.1" ]; then
-    export KBUILD_BUILD_TIMESTAMP="Tue Dec 12 12:32:56 UTC 2025"
+    export KBUILD_BUILD_TIMESTAMP="Tue Mar 10 03:53:33 UTC 2026"
     export KBUILD_BUILD_VERSION=1
     export PATH="$WORKSPACE/kernel_workspace/kernel_platform/prebuilts/clang/host/linux-x86/clang-r487747c/bin:$PATH"
     eval "$MAKE_CMD_COMMON KCFLAGS+=-O2"
